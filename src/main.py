@@ -6,7 +6,7 @@ import importlib.util
 import time
 from datetime import datetime
 
-from Schedule import Periodic
+from schedule import Periodic
 
 if __name__ == "__main__":
     args = sys.argv
