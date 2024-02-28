@@ -2,29 +2,23 @@ from abc import ABC
 from datetime import timedelta, datetime
 
 
-class Schedule(ABC):
-
-    def tik(self) -> bool:
-        raise NotImplementedError()
-
-    @classmethod
-    def str_to_timedelta(cls, period_str: str):
-        time_dict = {'s': 0, 'm': 0, 'h': 0, 'd': 0}
-        num = "0"
-        for c in period_str:
-            if c in time_dict:
-                time_dict[c] += int(num)
-                num = "0"
-            elif c.isdigit():
-                num += c
-            else:
-                raise ValueError("invalid format")
-        if num != "0":
+def str_to_timedelta(period_str: str):
+    time_dict = {'s': 0, 'm': 0, 'h': 0, 'd': 0}
+    num = "0"
+    for c in period_str:
+        if c in time_dict:
+            time_dict[c] += int(num)
+            num = "0"
+        elif c.isdigit():
+            num += c
+        else:
             raise ValueError("invalid format")
-        return timedelta(seconds=time_dict['s'], minutes=time_dict['m'], hours=time_dict['h'], days=time_dict['d'])
+    if num != "0":
+        raise ValueError("invalid format")
+    return timedelta(seconds=time_dict['s'], minutes=time_dict['m'], hours=time_dict['h'], days=time_dict['d'])
 
 
-class Periodic(Schedule):
+class Periodic:
     def __init__(self, seconds: int = 0, minutes: int = 0, hours: int = 0, days: int = 0,
                  start: datetime = None, max_delay=None):
         self.start = datetime.now() if start is None else start
@@ -52,7 +46,7 @@ class Periodic(Schedule):
         return False
 
 
-class Regular(Schedule):
+class Regular:
     def __init__(self, minutes, hours, week_days, month_days, start, max_delay):
         if all([0 <= m <= 59 for m in minutes]):
             self.minutes = sorted(minutes)
