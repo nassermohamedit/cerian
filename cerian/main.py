@@ -27,18 +27,5 @@ if __name__ == "__main__":
     jobs = list()
     for module in task_modules:
         for name, obj in inspect.getmembers(module):
-            if inspect.isfunction(obj) and obj.__dict__.get("__decorator_name__", None) == "job":
-                schedule = Periodic(*obj.__dict__.get("__schedule__"))
-                jobs.append({"task": obj, "schedule": schedule})
-    while True:
-        now = datetime.now()
-        for job in jobs:
-            schedule = job.get("schedule")
-            task = job.get("task")
-            next_time = job.get("next_time", schedule.get_next_time())
-            if next_time < now:
-                multiprocessing.Process(target=task).start()
-                job["next_time"] = schedule.get_next_time()
-            else:
-                job["next_time"] = next_time
-        time.sleep(1)
+            # TODO - detect if is cerian job
+            pass

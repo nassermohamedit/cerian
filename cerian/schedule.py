@@ -1,4 +1,3 @@
-from abc import ABC
 from datetime import timedelta, datetime
 
 
@@ -19,14 +18,15 @@ def str_to_timedelta(period_str: str):
 
 
 class Periodic:
-    def __init__(self, seconds: int = 0, minutes: int = 0, hours: int = 0, days: int = 0,
-                 start: datetime = None, max_delay=None):
+    def __init__(self, period: str | timedelta, start: datetime = None, max_delay=None):
+        self.period = period
+        if isinstance(period, str):
+            self.period = str_to_timedelta(period)
+        elif not isinstance(period, timedelta):
+            raise ValueError("period should be a string representation of a period or a timedelta object")
         self.start = datetime.now() if start is None else start
-        self.period = None
-        if seconds != 0 or minutes != 0 or hours != 0 or days != 0:
-            self.period = timedelta(seconds=seconds, minutes=minutes, hours=hours, days=days)
-        self.last_time = None
         self.max_delay = timedelta(minutes=1) if max_delay is None else max_delay
+        self.last_time = None
 
     def tik(self) -> bool:
         now = datetime.now()

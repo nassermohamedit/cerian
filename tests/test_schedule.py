@@ -1,5 +1,5 @@
 import pytest
-from src.schedule import str_to_timedelta
+from cerian.schedule import str_to_timedelta
 from datetime import timedelta
 
 
