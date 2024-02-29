@@ -2,30 +2,44 @@ from datetime import timedelta, datetime
 
 
 def str_to_timedelta(period_str: str):
-    time_dict = {'s': 0, 'm': 0, 'h': 0, 'd': 0}
-    num = "0"
-    for c in period_str:
-        if c in time_dict:
-            time_dict[c] += int(num)
-            num = "0"
-        elif c.isdigit():
-            num += c
-        else:
-            raise ValueError("invalid format")
-    if num != "0":
-        raise ValueError("invalid format")
-    return timedelta(seconds=time_dict['s'], minutes=time_dict['m'], hours=time_dict['h'], days=time_dict['d'])
+    elements = {'mc': 0, 'ml': 0, 's': 0, 'm': 0, 'h': 0, 'd': 0}
+    found = set()
+    values = period_str.split(":")
+    for e in values:
+        try:
+            if len(e) > 0 and e[-1] in elements:
+                if e[-1] not in found:
+                    elements[e[-1]] = int(e[:-1])
+                    found.add(e[-1])
+                else:
+                    raise ValueError()
+            elif len(e) > 1 and e[-2:] in elements:
+                if e[-2:] not in found:
+                    elements[e[-2:]] = int(e[:-2])
+                    found.add(e[-2:])
+                else:
+                    raise ValueError()
+            else:
+                raise ValueError()
+        except ValueError or TypeError:
+            raise ValueError("Invalid period format")
+    return timedelta(microseconds=elements['mc'], milliseconds=elements['ml'], seconds=elements['s'],
+                     minutes=elements['m'], hours=elements['h'], days=elements['d'])
+
+
+def validate_period(period) -> timedelta:
+    if isinstance(period, str):
+        return str_to_timedelta(period)
+    if isinstance(period, timedelta):
+        return period
+    raise TypeError("period should be a string representation of a period or a timedelta object")
 
 
 class Periodic:
-    def __init__(self, period: str | timedelta, start: datetime = None, max_delay=None):
-        self.period = period
-        if isinstance(period, str):
-            self.period = str_to_timedelta(period)
-        elif not isinstance(period, timedelta):
-            raise ValueError("period should be a string representation of a period or a timedelta object")
+    def __init__(self, period: str | timedelta, start: datetime = None, max_delay: str | timedelta = None):
+        self.period = validate_period(period)
         self.start = datetime.now() if start is None else start
-        self.max_delay = timedelta(minutes=1) if max_delay is None else max_delay
+        self.max_delay = timedelta(minutes=1) if max_delay is None else validate_period(max_delay)
         self.last_time = None
 
     def tik(self) -> bool:

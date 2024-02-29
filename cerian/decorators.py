@@ -1,6 +1,6 @@
 import functools
 from datetime import datetime, timedelta
-from cerian.schedule import Periodic
+from schedule import Periodic
 
 
 def job(func):

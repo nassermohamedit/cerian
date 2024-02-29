@@ -1,6 +1,7 @@
 from cerian.decorators import job, periodic
 from cerian.schedule import Periodic
 
+
 def test_job_decorator():
     @job
     def task():
