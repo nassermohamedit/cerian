@@ -53,3 +53,15 @@ def test_periodic_tik_before_start():
     start = datetime.now() + timedelta(seconds=10)
     periodic = Periodic("1m", start=start)
     assert periodic.tik() is False
+
+
+def test_get_next_time_before_start():
+    start = datetime.now() + timedelta(minutes=1)
+    periodic = Periodic("1s", start=start)
+    assert periodic.get_next_time() == start
+
+
+def test_get_next_time_after_start():
+    start = datetime.now().replace(microsecond=0, second=0)
+    periodic = Periodic("1m", start=start)
+    assert periodic.get_next_time() == start + timedelta(minutes=1)

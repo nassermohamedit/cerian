@@ -59,6 +59,13 @@ class Periodic:
             self.last_time += self.period * ((now - self.last_time) // self.period)
         return False
 
+    def get_next_time(self):
+        now = datetime.now()
+        if now < self.start:
+            return self.start
+        last_time = self.start if self.last_time is None else self.last_time
+        return last_time + self.period * ((now - last_time) // self.period + 1)
+
 
 class Regular:
     def __init__(self, minutes, hours, week_days, month_days, start, max_delay):
