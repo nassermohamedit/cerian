@@ -1,3 +1,4 @@
+import abc
 from datetime import timedelta, datetime
 from abc import ABC
 
@@ -41,10 +42,16 @@ def validate_period(period: str | timedelta) -> timedelta:
     raise TypeError("period should be a string representation of a period or a timedelta object")
 
 
-class TimeSequence(ABC):
+class TimeSequence(metaclass=abc.ABCMeta):
     """
-    A TimeSequence instance represents a finite or infinite sequence of time points over the time axis.
+    TimeSequence represents a finite or infinite sequence of time points over the time axis.
     """
+    @classmethod
+    def __subclasshook__(cls, subclass):
+        return (hasattr(subclass, 'tick') and callable(subclass.tick)
+                and hasattr(subclass, "get_next_point") and callable(subclass.next_point))
+
+    @abc.abstractmethod
     def tick(self) -> bool:
         """
         Returns whether the current time point (now) is in this sequence. Implementations must test if there is a
@@ -52,16 +59,17 @@ class TimeSequence(ABC):
 
         :return: True if and only if the above condition is satisfied.
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
-    def get_next_point(self):
+    @abc.abstractmethod
+    def next_point(self):
         """
         Returns the next time point in this sequence relative to the current moment (now) or None if there is no next
         point.
 
         :return: datetime or None
         """
-        raise NotImplementedError()
+        raise NotImplementedError
 
 
 class Periodic(TimeSequence):
@@ -91,7 +99,7 @@ class Periodic(TimeSequence):
             self.last_time += self.period * ((now - self.last_time) // self.period)
         return False
 
-    def get_next_point(self) -> datetime:
+    def next_point(self) -> datetime:
         now = datetime.now()
         if now < self.start:
             return self.start
@@ -126,5 +134,9 @@ class Regular(TimeSequence):
         self.max_delay = max_delay
 
     def tick(self):
+        # TODO
+        pass
+
+    def next_point(self):
         # TODO
         pass
