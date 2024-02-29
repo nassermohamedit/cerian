@@ -1,5 +1,5 @@
 import functools
-from datetime import timedelta
+from datetime import datetime, timedelta
 from cerian.schedule import Periodic
 
 
@@ -11,14 +11,11 @@ def job(func):
     return wrapper
 
 
-def periodic(period: str | timedelta):
+def periodic(period: str | timedelta, start: datetime = None, max_delay: str | timedelta = None):
     def periodic_(func):
         def wrapper():
             func()
-        wrapper.period = Periodic(period)
+        wrapper.period = Periodic(period, start=start, max_delay=max_delay)
         return wrapper
     return periodic_
 
-
-if __name__ == "__main__":
-    pass
