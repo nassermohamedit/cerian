@@ -44,7 +44,7 @@ def test_periodic_tik():
     periodic = Periodic("500ml", max_delay="10ml")
     expected = True
     for i in range(10):
-        assert periodic.tik() is expected
+        assert periodic.tick() is expected
         expected = not expected
         time.sleep(0.25)
 
@@ -52,16 +52,16 @@ def test_periodic_tik():
 def test_periodic_tik_before_start():
     start = datetime.now() + timedelta(seconds=10)
     periodic = Periodic("1m", start=start)
-    assert periodic.tik() is False
+    assert periodic.tick() is False
 
 
 def test_get_next_time_before_start():
     start = datetime.now() + timedelta(minutes=1)
     periodic = Periodic("1s", start=start)
-    assert periodic.get_next_time() == start
+    assert periodic.get_next_point() == start
 
 
 def test_get_next_time_after_start():
     start = datetime.now().replace(microsecond=0, second=0)
     periodic = Periodic("1m", start=start)
-    assert periodic.get_next_time() == start + timedelta(minutes=1)
+    assert periodic.get_next_point() == start + timedelta(minutes=1)

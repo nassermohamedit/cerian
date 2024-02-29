@@ -1,11 +1,12 @@
 from datetime import timedelta, datetime
+from abc import ABC
 
 
 def parse_timedelta_str(period_str: str) -> timedelta:
     """
     Convert a string representation of a time period into a timedelta object.
-    The input string must be in the format: "{days}d:{hours}h:{minutes}m:{seconds}s:{milliseconds}ml:{microseconds}mc".
-    order of components is not important, and each component must occur at most once
+    Format: "{days}d:{hours}h:{minutes}m:{seconds}s:{milliseconds}ml:{microseconds}mc".
+    The order of components is not important, and each component must occur at most once
     """
     elements = {'mc': 0, 'ml': 0, 's': 0, 'm': 0, 'h': 0, 'd': 0}
     found = set()
@@ -32,7 +33,7 @@ def parse_timedelta_str(period_str: str) -> timedelta:
                      minutes=elements['m'], hours=elements['h'], days=elements['d'])
 
 
-def validate_period(period) -> timedelta:
+def validate_period(period: str | timedelta) -> timedelta:
     if isinstance(period, str):
         return parse_timedelta_str(period)
     if isinstance(period, timedelta):
@@ -40,14 +41,40 @@ def validate_period(period) -> timedelta:
     raise TypeError("period should be a string representation of a period or a timedelta object")
 
 
-class Periodic:
+class TimeSequence(ABC):
+    """
+    A TimeSequence instance represents a finite or infinite sequence of time points over the time axis.
+    """
+    def tick(self) -> bool:
+        """
+        Returns whether the current time point (now) is in this sequence. Implementations must test if there is a
+        time poit t in this sequence such that |now - t| < e.  e is a predefined time period,
+
+        :return: True if and only if the above condition is satisfied.
+        """
+        raise NotImplementedError()
+
+    def get_next_point(self):
+        """
+        Returns the next time point in this sequence relative to the current moment (now) or None if there is no next
+        point.
+
+        :return: datetime or None
+        """
+        raise NotImplementedError()
+
+
+class Periodic(TimeSequence):
+    """
+    A periodic sequence of time points.
+    """
     def __init__(self, period: str | timedelta, start: datetime = None, max_delay: str | timedelta = None):
         self.period = validate_period(period)
         self.start = datetime.now() if start is None else start
         self.max_delay = timedelta(minutes=1) if max_delay is None else validate_period(max_delay)
         self.last_time = None
 
-    def tik(self) -> bool:
+    def tick(self) -> bool:
         now = datetime.now()
         if now < self.start:
             return False
@@ -56,7 +83,7 @@ class Periodic:
                 self.last_time = self.start
                 return True
             self.last_time = self.start + ((now - self.start) // self.period) * self.period
-            return self.tik()
+            return self.tick()
         if self.period <= now - self.last_time <= self.period + self.max_delay:
             self.last_time += self.period
             return True
@@ -64,7 +91,7 @@ class Periodic:
             self.last_time += self.period * ((now - self.last_time) // self.period)
         return False
 
-    def get_next_time(self):
+    def get_next_point(self) -> datetime:
         now = datetime.now()
         if now < self.start:
             return self.start
@@ -72,7 +99,7 @@ class Periodic:
         return last_time + self.period * ((now - last_time) // self.period + 1)
 
 
-class Regular:
+class Regular(TimeSequence):
     def __init__(self, minutes, hours, week_days, month_days, start, max_delay):
         if all([0 <= m <= 59 for m in minutes]):
             self.minutes = sorted(minutes)
@@ -98,6 +125,6 @@ class Regular:
         self.last_time = None
         self.max_delay = max_delay
 
-    def tik(self):
+    def tick(self):
         # TODO
         pass
