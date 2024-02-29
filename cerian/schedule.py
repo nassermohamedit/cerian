@@ -1,7 +1,12 @@
 from datetime import timedelta, datetime
 
 
-def str_to_timedelta(period_str: str):
+def parse_timedelta_str(period_str: str) -> timedelta:
+    """
+    Convert a string representation of a time period into a timedelta object.
+    The input string must be in the format: "{days}d:{hours}h:{minutes}m:{seconds}s:{milliseconds}ml:{microseconds}mc".
+    order of components is not important, and each component must occur at most once
+    """
     elements = {'mc': 0, 'ml': 0, 's': 0, 'm': 0, 'h': 0, 'd': 0}
     found = set()
     values = period_str.split(":")
@@ -29,7 +34,7 @@ def str_to_timedelta(period_str: str):
 
 def validate_period(period) -> timedelta:
     if isinstance(period, str):
-        return str_to_timedelta(period)
+        return parse_timedelta_str(period)
     if isinstance(period, timedelta):
         return period
     raise TypeError("period should be a string representation of a period or a timedelta object")
