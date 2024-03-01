@@ -1,6 +1,8 @@
 import abc
 from datetime import timedelta, datetime
-from abc import ABC
+from typing import Optional, override, Sequence
+
+from cerian.util import validate_sequence
 
 
 def parse_timedelta_str(period_str: str) -> timedelta:
@@ -28,7 +30,7 @@ def parse_timedelta_str(period_str: str) -> timedelta:
                     raise ValueError()
             else:
                 raise ValueError()
-        except ValueError or TypeError:
+        except (ValueError, TypeError):
             raise ValueError("Invalid period format")
     return timedelta(microseconds=elements['mc'], milliseconds=elements['ml'], seconds=elements['s'],
                      minutes=elements['m'], hours=elements['h'], days=elements['d'])
@@ -49,7 +51,7 @@ class TimeSequence(metaclass=abc.ABCMeta):
     @classmethod
     def __subclasshook__(cls, subclass):
         return (hasattr(subclass, 'tick') and callable(subclass.tick)
-                and hasattr(subclass, "get_next_point") and callable(subclass.next_point))
+                and hasattr(subclass, "next_point") and callable(subclass.next_point))
 
     @abc.abstractmethod
     def tick(self) -> bool:
@@ -62,7 +64,7 @@ class TimeSequence(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def next_point(self):
+    def next_point(self) -> Optional[datetime]:
         """
         Returns the next time point in this sequence relative to the current moment (now) or None if there is no next
         point.
@@ -76,13 +78,18 @@ class Periodic(TimeSequence):
     """
     A periodic sequence of time points.
     """
-    def __init__(self, period: str | timedelta, start: datetime = None, max_delay: str | timedelta = None):
+
+    def __init__(self,
+                 period: str | timedelta,
+                 start: Optional[datetime] = None,
+                 max_delay: Optional[str | timedelta] = None):
         self.period = validate_period(period)
         self.start = datetime.now() if start is None else start
         self.max_delay = timedelta(minutes=1) if max_delay is None else validate_period(max_delay)
         self.last_time = None
 
-    def tick(self) -> bool:
+    @override
+    def tick(self):
         now = datetime.now()
         if now < self.start:
             return False
@@ -99,7 +106,8 @@ class Periodic(TimeSequence):
             self.last_time += self.period * ((now - self.last_time) // self.period)
         return False
 
-    def next_point(self) -> datetime:
+    @override
+    def next_point(self):
         now = datetime.now()
         if now < self.start:
             return self.start
@@ -108,35 +116,27 @@ class Periodic(TimeSequence):
 
 
 class Regular(TimeSequence):
-    def __init__(self, minutes, hours, week_days, month_days, start, max_delay):
-        if all([0 <= m <= 59 for m in minutes]):
-            self.minutes = sorted(minutes)
-        else:
-            raise Exception("minutes must be >= 0 and < 59")
-
-        if all([0 <= h <= 23 for h in hours]):
-            self.hours = sorted(hours)
-        else:
-            raise Exception("hours must be >= 0 and < 24")
-
-        if all([0 <= d <= 6 for d in week_days]):
-            self.wdays = sorted(week_days)
-        else:
-            raise Exception("week days must be >= 0 and < 6")
-
-        if all([1 <= h <= 31 for h in month_days]):
-            self.mdays = sorted(month_days)
-        else:
-            raise Exception("month days must be >= 1 and < 31")
-
-        self.start = datetime.now() if start is None else start
+    def __init__(self,
+                 minutes: Optional[Sequence[int]] = None,
+                 hours: Optional[Sequence[int]] = None,
+                 wdays: Optional[Sequence[int]] = None,
+                 mdays: Optional[Sequence[int]] = None,
+                 start: Optional[datetime] = None,
+                 max_delay: Optional[timedelta | str] = None):
+        self.minutes = sorted(validate_sequence(minutes or [], (lambda v: 0 <= v <= 59,), "Invalid value for minute"))
+        self.hours = sorted(validate_sequence(hours or [], (lambda v: 0 <= v <= 23,), "Invalid value for hour"))
+        self.wdays = sorted(validate_sequence(wdays or [], (lambda v: 0 <= v <= 6,), "Invalid value for week day"))
+        self.mdays = sorted(validate_sequence(mdays or [], (lambda v: 0 <= v <= 23,), "Invalid value for month day"))
+        self.start = start or datetime.now()
         self.last_time = None
         self.max_delay = max_delay
 
+    @override
     def tick(self):
         # TODO
         pass
 
+    @override
     def next_point(self):
         # TODO
         pass
