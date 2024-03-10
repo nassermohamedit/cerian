@@ -2,8 +2,6 @@ import abc
 from datetime import timedelta, datetime
 from typing import Optional, override, Sequence
 
-from cerian.util import validate_sequence
-
 
 def parse_timedelta_str(period_str: str) -> timedelta:
     """
@@ -133,20 +131,50 @@ class Regular(TimeSequence):
                  hours: Optional[Sequence[int]] = None,
                  wdays: Optional[Sequence[int]] = None,
                  mdays: Optional[Sequence[int]] = None,
+                 months: Optional[Sequence[int]] = None,
                  start: Optional[datetime] = None,
-                 max_delay: Optional[timedelta | str] = None):
-        self.minutes = sorted(validate_sequence(minutes or [], (lambda v: 0 <= v <= 59,), "Invalid value for minute"))
-        self.hours = sorted(validate_sequence(hours or [], (lambda v: 0 <= v <= 23,), "Invalid value for hour"))
-        self.wdays = sorted(validate_sequence(wdays or [], (lambda v: 0 <= v <= 6,), "Invalid value for week day"))
-        self.mdays = sorted(validate_sequence(mdays or [], (lambda v: 0 <= v <= 23,), "Invalid value for month day"))
+                 err: Optional[datetime | str] = None):
+        def bnds_chckr(x, y):
+            return lambda v: x <= v <= y
+
+        self.minutes = list(filter(bnds_chckr(0, 59), minutes)) if len(minutes) > 0 else TimeSequence.MINUTES
+        self.hours = list(filter(bnds_chckr(0, 23), hours)) if len(hours) > 0 else TimeSequence.HOURS
+        self.wdays = list(filter(bnds_chckr(0, 6), wdays)) if len(wdays) > 0 else TimeSequence.WEEK_DAYS
+        self.mdays = list(filter(bnds_chckr(1, 31), mdays)) if len(mdays) > 0 else TimeSequence.DAYS
+        self.months = list(filter(bnds_chckr(1, 12), months)) if len(months) > 0 else TimeSequence.MONTHS
         self.start = start or datetime.now()
-        self.last_time = None
-        self.max_delay = max_delay
+        self.err = timedelta() if err is None else validate_period(err)
+
+    @classmethod
+    def parse(cls, string: str, err: Optional[str | timedelta] = None):
+        # [minutes]:[hours]:[mdays]:[wdays]:[months]
+        elements = Regular._parse_str(string)
+        args = {
+            "minutes": next(elements) or [],
+            "hours": next(elements) or [],
+            "days": next(elements) or [],
+            "wdays": next(elements) or [],
+            "months": next(elements) or [],
+        }
+        return Regular(**args, err=err)
+
+    @classmethod
+    def _parse_str(cls, string: str):
+        elements = string.replace(" ", "").split(":")
+        if len(elements) != 5:
+            raise ValueError("Invalid format for time matcher")
+        elements = list(map(lambda x: x[1:-1].split(","), elements))
+        for i in range(5):
+            if '' in elements[i]:
+                elements[i] = None
+            else:
+                elements[i] = list(map(lambda x: int(x), elements[i]))
+        for e in elements:
+            yield e
 
     @override
     def tick(self):
-        # TODO
-        pass
+        return datetime.now() in self
 
     @override
     def next_point(self):
@@ -155,4 +183,22 @@ class Regular(TimeSequence):
 
     @override
     def __contains__(self, dt: datetime):
-        pass
+        instant = datetime.now()
+        for month in self.months:
+            instant = instant.replace(month=month)
+            for hour in self.hours:
+                instant = instant.replace(hour=hour)
+                for minute in self.minutes:
+                    instant = instant.replace(minute=minute)
+                    for day in self.mdays:
+                        instant = instant.replace(day=day)
+                        if abs(instant - dt) < self.err:
+                            return True
+                    for day in self.wdays:
+                        if dt.weekday() == day:
+                            instant = instant.replace(day=dt.day)
+                            if abs(instant - dt) < self.err:
+                                return True
+
+        return False
+
