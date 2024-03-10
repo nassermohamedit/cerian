@@ -96,40 +96,34 @@ class Periodic(TimeSequence):
     def __init__(self,
                  period: str | timedelta,
                  start: Optional[datetime] = None,
-                 max_delay: Optional[str | timedelta] = None):
+                 err: Optional[str | timedelta] = None):
         self.period = validate_period(period)
-        self.start = datetime.now() if start is None else start
-        self.max_delay = timedelta(minutes=1) if max_delay is None else validate_period(max_delay)
+        self.start = start or datetime.now()
+        self.err = err or timedelta(seconds=1)
         self.last_time = None
 
     @override
     def tick(self):
-        now = datetime.now()
-        if now < self.start:
-            return False
-        if self.last_time is None:
-            if now < self.start + self.max_delay:
-                self.last_time = self.start
-                return True
-            self.last_time = self.start + ((now - self.start) // self.period) * self.period
-            return self.tick()
-        if self.period <= now - self.last_time <= self.period + self.max_delay:
-            self.last_time += self.period
-            return True
-        if self.last_time < now:
-            self.last_time += self.period * ((now - self.last_time) // self.period)
-        return False
+        return datetime.now() in self
 
     @override
     def next_point(self):
         now = datetime.now()
         if now < self.start:
             return self.start
-        last_time = self.start if self.last_time is None else self.last_time
-        return last_time + self.period * ((now - last_time) // self.period + 1)
+        tp = self.start + ((now - self.start) // self.period) * self.period
+        return tp + self.period
 
+    @override
     def __contains__(self, item):
-        pass
+        if abs(item - self.start) < self.err:
+            return True
+        if item < self.start:
+            return False
+        tp = self.start + ((item - self.start) // self.period) * self.period
+        if abs(tp - item) < self.err or abs(tp + self.period - item) < self.err:
+            return True
+        return False
 
 
 class Regular(TimeSequence):
