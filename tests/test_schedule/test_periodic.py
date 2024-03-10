@@ -1,7 +1,7 @@
 import time
 import pytest
 from datetime import datetime, timedelta
-from cerian.schedule import Periodic
+from cerian.schedule import Periodic, validate_period
 
 
 def test_periodic_constructor_with_str_period():
@@ -22,14 +22,14 @@ def test_periodic_constructor_with_invalid_value():
         Periodic(period)
 
 
-def test_periodic_constructor_with_default_max_delay():
+def test_periodic_constructor_with_default_err():
     instance = Periodic("1h")
-    assert instance.max_delay == timedelta(minutes=1)
+    assert instance.err == timedelta(seconds=1)
 
 
-def test_periodic_constructor_with_max_delay():
-    instance = Periodic("1h", max_delay="1m")
-    assert instance.max_delay == timedelta(minutes=1)
+def test_periodic_constructor_with_err():
+    instance = Periodic("1h", err="1m")
+    assert instance.err == timedelta(minutes=1)
 
 
 def test_periodic_constructor_with_start():
@@ -38,10 +38,21 @@ def test_periodic_constructor_with_start():
     assert instance.start == now
 
 
+def test_periodic_in():
+    t = datetime.now()
+    seq = Periodic("1h", start=t)
+    period = validate_period("1h") // 2
+    expected = True
+    for i in range(10):
+        assert (t in seq) == expected
+        expected = not expected
+        t += period
+
+
 @pytest.mark.nonrepeatable
 @pytest.mark.slow
-def test_periodic_tik():
-    periodic = Periodic("500ml", max_delay="10ml")
+def test_periodic_tick():
+    periodic = Periodic("500ml", err="10ml")
     expected = True
     for i in range(10):
         assert periodic.tick() is expected
@@ -49,7 +60,7 @@ def test_periodic_tik():
         time.sleep(0.25)
 
 
-def test_periodic_tik_before_start():
+def test_periodic_tick_before_start():
     start = datetime.now() + timedelta(seconds=10)
     periodic = Periodic("1m", start=start)
     assert periodic.tick() is False
