@@ -4,7 +4,7 @@ from datetime import timedelta
 
 
 @pytest.mark.parametrize("period_str", ["3d:2h:30m:0ml", "3d:150m", "3d:30m:2h:0s", "74h:30m"])
-def test_src_to_timedelta_success(period_str):
+def test_str_to_timedelta_success(period_str):
     assert parse_timedelta_str(period_str) == timedelta(days=3, hours=2, minutes=30)
 
 
