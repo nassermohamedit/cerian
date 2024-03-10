@@ -48,6 +48,13 @@ class TimeSequence(metaclass=abc.ABCMeta):
     """
     TimeSequence represents a finite or infinite sequence of time points over the time axis.
     """
+
+    MINUTES = [i for i in range(0, 59)]
+    HOURS = [i for i in range(0, 23)]
+    DAYS = [i for i in range(31)]
+    WEEK_DAYS = [i for i in range(0, 6)]
+    MONTHS = [i for i in range(1, 12)]
+
     @classmethod
     def __subclasshook__(cls, subclass):
         return (hasattr(subclass, 'tick') and callable(subclass.tick)
@@ -70,6 +77,13 @@ class TimeSequence(metaclass=abc.ABCMeta):
         point.
 
         :return: datetime or None
+        """
+        raise NotImplementedError
+
+    @abc.abstractmethod
+    def __contains__(self, item: datetime):
+        """
+        Returns whether the provided time point is in this sequence.
         """
         raise NotImplementedError
 
@@ -114,8 +128,12 @@ class Periodic(TimeSequence):
         last_time = self.start if self.last_time is None else self.last_time
         return last_time + self.period * ((now - last_time) // self.period + 1)
 
+    def __contains__(self, item):
+        pass
+
 
 class Regular(TimeSequence):
+
     def __init__(self,
                  minutes: Optional[Sequence[int]] = None,
                  hours: Optional[Sequence[int]] = None,
@@ -139,4 +157,8 @@ class Regular(TimeSequence):
     @override
     def next_point(self):
         # TODO
+        pass
+
+    @override
+    def __contains__(self, dt: datetime):
         pass
