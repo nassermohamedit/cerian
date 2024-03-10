@@ -69,16 +69,6 @@ class TimeSequence(metaclass=abc.ABCMeta):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def next_point(self) -> Optional[datetime]:
-        """
-        Returns the next time point in this sequence relative to the current moment (now) or None if there is no next
-        point.
-
-        :return: datetime or None
-        """
-        raise NotImplementedError
-
-    @abc.abstractmethod
     def __contains__(self, item: datetime):
         """
         Returns whether the provided time point is in this sequence.
@@ -97,8 +87,7 @@ class Periodic(TimeSequence):
                  err: Optional[str | timedelta] = None):
         self.period = validate_period(period)
         self.start = start or datetime.now()
-        self.err = err or timedelta(seconds=1)
-        self.last_time = None
+        self.err = timedelta(seconds=1) if err is None else validate_period(err)
 
     @override
     def tick(self):
@@ -106,6 +95,12 @@ class Periodic(TimeSequence):
 
     @override
     def next_point(self):
+        """
+        Returns the next time point in this sequence relative to the current moment (now) or None if there is no next
+        point.
+
+        :return: datetime or None
+        """
         now = datetime.now()
         if now < self.start:
             return self.start
@@ -175,11 +170,6 @@ class Regular(TimeSequence):
     @override
     def tick(self):
         return datetime.now() in self
-
-    @override
-    def next_point(self):
-        # TODO
-        pass
 
     @override
     def __contains__(self, dt: datetime):
