@@ -47,11 +47,11 @@ class TimeSequence(metaclass=abc.ABCMeta):
     TimeSequence represents a finite or infinite sequence of time points over the time axis.
     """
 
-    MINUTES = [i for i in range(0, 59)]
-    HOURS = [i for i in range(0, 23)]
-    DAYS = [i for i in range(31)]
-    WEEK_DAYS = [i for i in range(0, 6)]
-    MONTHS = [i for i in range(1, 12)]
+    MINUTES = [i for i in range(0, 60)]
+    HOURS = [i for i in range(0, 24)]
+    DAYS = [i for i in range(32)]
+    WEEK_DAYS = [i for i in range(0, 7)]
+    MONTHS = [i for i in range(1, 13)]
 
     @classmethod
     def __subclasshook__(cls, subclass):
