@@ -17,7 +17,7 @@ def periodic(period: str | timedelta, start: datetime = None, max_delay: str | t
     def periodic_(func):
         def wrapper():
             func()
-        wrapper.period = Periodic(period, start=start, max_delay=max_delay)
+        wrapper.period = Periodic(period, start=start, err=max_delay)
         return wrapper
     return periodic_
 
