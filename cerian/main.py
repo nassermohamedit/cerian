@@ -2,6 +2,16 @@ import sys
 import os
 import inspect
 import importlib.util
+import time
+from multiprocessing import Process
+
+
+def time_loop(jobs):
+    while True:
+        for job in jobs:
+            if job[1].tick():
+                Process(target=job[0]).start()
+        time.sleep(0.1)
 
 
 def find_jobs(locations: list[str]) -> list[callable]:
@@ -21,7 +31,7 @@ def find_jobs(locations: list[str]) -> list[callable]:
     for module in module_objects:
         jobs_objects = filter(lambda mem: inspect.isfunction(mem[1]), inspect.getmembers(module))
         jobs_objects = filter(lambda mem: mem[1].__dict__.get("is_job", False), jobs_objects)
-        jobs_objects = map(lambda mem: mem[1], jobs_objects)
+        jobs_objects = map(lambda mem: (mem[1], mem[1].__dict__.get('schedule')), jobs_objects)
         jobs.extend(list(jobs_objects))
     return jobs
 
@@ -32,5 +42,4 @@ if __name__ == "__main__":
     if len(args) < 2:
         raise Exception("No location task specified")
     jobs = find_jobs(sys.argv[1:])
-    for job in jobs:
-        job()
+    time_loop(jobs)
