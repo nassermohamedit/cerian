@@ -88,10 +88,28 @@ class Periodic(TimeSequence):
         self.period = validate_period(period)
         self.start = start or datetime.now()
         self.err = timedelta(seconds=1) if err is None else validate_period(err)
+        self._last_time = None
 
     @override
     def tick(self):
-        return datetime.now() in self
+        now = datetime.now()
+        if self._last_time is not None and abs(now - self._last_time) < self.err:
+            return False
+        if self._last_time is None:
+            if abs(now - self.start) < self.err:
+                self._last_time = self.start
+                return True
+            if now < self.start:
+                return False
+        tp = self.start + ((now - self.start) // self.period) * self.period
+        if abs(tp - now) < self.err:
+            self._last_time = tp
+            return True
+        tp += self.period
+        if abs(tp - now) < self.err:
+            self._last_time = tp
+            return True
+        return False
 
     @override
     def next_point(self):
