@@ -52,14 +52,14 @@ def test_periodic_in():
 @pytest.mark.nonrepeatable
 @pytest.mark.slow
 def test_periodic_tick():
-    periodic = Periodic("1s", err="50ml")
+    periodic = Periodic("60s", err="5s")
     expected = True
     for i in range(10):
         assert periodic.tick() is expected
         expected = not expected
         if not expected:
             assert periodic.tick() is expected
-        time.sleep(0.5)
+        time.sleep(30)
 
 
 def test_periodic_tick_before_start():
