@@ -1,5 +1,18 @@
-[tool.pytest.ini_options]
-pythonpath = "cerian"
-addopts = [
-    "--import-mode=importlib",
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cerian"
+authors = [
+    {name = "Nasser Mohamed", email = "nassermohamedit@gmail.com"},
 ]
+description = "workflow orchestration framework"
+requires-python = ">=3.12"
+version = "1.0.0"
+classifiers = [
+    "Programming Language :: Python :: 3",
+]
+
+[project.scripts]
+cerian = "cerian.cerian:main"
