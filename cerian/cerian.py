@@ -36,7 +36,7 @@ def find_jobs(locations: list[str]) -> list[callable]:
     return jobs
 
 
-if __name__ == "__main__":
+def main():
     print("cerian")
     args = sys.argv
     if len(args) < 2:
