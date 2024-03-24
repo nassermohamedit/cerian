@@ -14,6 +14,6 @@ def test_periodic_decorator():
     @periodic("1m")
     def periodic_task():
         print("I am periodic?")
-    assert periodic_task.__dict__.get("period", None).period == Periodic(period="1m").period
+    assert periodic_task.__dict__.get("schedule", None).period == Periodic(period="1m").period
 
 
