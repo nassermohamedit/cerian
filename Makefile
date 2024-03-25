@@ -1,5 +1,5 @@
 PYTHON_VERSION := $(shell $(PYTHON) -c 'import sys; print(".".join(map(str, sys.version_info[:2])))')
-PYTHON ?:
+PYTHON := python
 VENV := venv
 
 check_python_version:
@@ -11,7 +11,9 @@ check_python_version:
 setup_dev_env:
 	$(PYTHON) -m venv venv
 	$(VENV)/bin/python -m pip install --upgrade pytest build setuptools
-	$(VENV)/bin/python -m pip install -r requirements.txt
+	@if [ -f requirements.txt ]; then \
+        $(VENV)/bin/python -m pip  install -r requirements.txt; \
+    fi
 
 setup: check_python_version setup_dev_env
 
